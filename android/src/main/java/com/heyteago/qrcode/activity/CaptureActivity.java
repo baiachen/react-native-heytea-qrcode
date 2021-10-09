@@ -2,18 +2,21 @@ package com.heyteago.qrcode.activity;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -29,7 +32,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
+
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
@@ -50,24 +53,20 @@ import com.heyteago.qrcode.Utils;
 import com.heyteago.qrcode.camera.CameraManager;
 import com.heyteago.qrcode.decoding.CaptureActivityHandler;
 import com.heyteago.qrcode.decoding.InactivityTimer;
-import com.google.zxing.DecodeHintType;
 import com.google.zxing.RGBLuminanceSource;
 import com.heyteago.qrcode.view.ViewfinderView;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 import pub.devrel.easypermissions.EasyPermissions;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Hashtable;
 import android.util.Base64;
 
 /**
@@ -142,13 +141,17 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_CODE_SCAN_GALLERY:
+//                    Log.i("saoma", data.getData()+"");
                     //获取选中图片的路径
                     photo_path = Utils.getRealPathFromUri(this, data.getData());
+                    if(photo_path == null){
+                        photo_path = _getRealPathFromUri(getApplication(), data.getData());
+                    }
                     mProgress = new ProgressDialog(CaptureActivity.this);
                     mProgress.setMessage("正在扫描...");
                     mProgress.setCancelable(false);
                     mProgress.show();
-
+//                    Log.i("saomaphoto_path", photo_path);
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -184,6 +187,21 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
     public void onBackPressed() {
         super.onBackPressed();
         RNHeyteaQRCodeModule.setQRCodeResult(null);
+    }
+
+    public static String _getRealPathFromUri(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 
     // /**
@@ -241,18 +259,19 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
      * @return
      */
     public Result scanningImage(String path) {
-        // if (TextUtils.isEmpty(path)) {
-        //     return null;
-        // }
-        // String reg = ".+(.jpg|.bmp|.jpeg|.png|.gif|.JPG|.BMP|.JPEG|.PNG|.GIF)$";
-        // Pattern pattern = Pattern.compile(reg);
-        // Matcher matcher = pattern.matcher(path);
-        // if (!matcher.find()) {
-        //     return null;
-        // }
-        // if (!new File(path).exists()) {
-        //     return null;
-        // }
+         if (TextUtils.isEmpty(path)) {
+             return null;
+         }
+//         String reg = ".+(.jpg|.bmp|.jpeg|.png|.gif|.JPG|.BMP|.JPEG|.PNG|.GIF)$";
+//         Pattern pattern = Pattern.compile(reg);
+//         Matcher matcher = pattern.matcher(path);
+//         if (!matcher.find()) {
+//             return null;
+//         }
+//        Log.i("saoma1",path);
+//         if (!new File(path).exists()) {
+//             return null;
+//         }
 
         // Hashtable<DecodeHintType, String> hints = new Hashtable<DecodeHintType, String>();
         // hints.put(DecodeHintType.CHARACTER_SET, "utf-8"); // 设置二维码内容的编码
@@ -292,20 +311,20 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
         //     return null;
         // }
 
-        String fileUrl = path.replace("file://","");
-        Result result = scannLumin(fileUrl);
+//        String fileUrl = path.replace("file://","");
+        Result result = scannLumin(path);
         if(result != null){
             return result;
         }
-        result = _scanningImage(fileUrl);
+        result = _scanningImage(path);
         if(result != null){
             return result;
         }
-        result = decodeBarcodeRGB(fileUrl);
+        result = decodeBarcodeRGB(path);
         if(result != null){
             return result;
         }
-        result = decodeBarcodeYUV(fileUrl);
+        result = decodeBarcodeYUV(path);
         if(result != null){
             return result;
         }
@@ -580,6 +599,9 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
         Result re = null;
         try {
             Bitmap barcode = fromToFileOrBase64(path, null);
+            if(barcode == null) {
+                return null;
+            }
             int width = barcode.getWidth();
             int height = barcode.getHeight();
             int[] data = new int[width * height];
@@ -613,7 +635,7 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
 
     public static Bitmap fromToFileOrBase64(String fileOrBase64, BitmapFactory.Options options) {
         try {
-
+            Log.i("saomiao",fileOrBase64+"");
             if (fileOrBase64.toLowerCase().indexOf(";base64,") > 0) {
                 return base64ToBitmap(fileOrBase64);
             }
@@ -657,6 +679,9 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
                 sampleSize = 1;
             options.inSampleSize = sampleSize;
             scanBitmap = BitmapFactory.decodeFile(path, options);
+            if(scanBitmap == null){
+                return null;
+            }
             int width=scanBitmap.getWidth();
             int height=scanBitmap.getHeight();
             int[] pixels=new int[width*height];
@@ -687,6 +712,9 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
         try {
 
             Bitmap barcode = fromToFileOrBase64(path, null);
+            if(barcode == null){
+                return null;
+            }
             Result result = decodeBarcodeRGB(barcode);
             barcode.recycle();
             barcode = null;
@@ -705,6 +733,7 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
      * @return
      */
     public static Result decodeBarcodeRGB(Bitmap barcode) {
+
         int width = barcode.getWidth();
         int height = barcode.getHeight();
         int[] data = new int[width * height];
@@ -739,6 +768,9 @@ public class CaptureActivity extends AppCompatActivity implements Callback, View
                 return null;
             }
             Bitmap barcode = fromToFileOrBase64(path, null);
+            if (null == barcode) {
+                return null;
+            }
             Result result = decodeBarcodeYUV(barcode);
             barcode.recycle();
             barcode = null;
