@@ -39,7 +39,6 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
-    self.navigationController.navigationBarHidden = NO;
     [obtain startRunningWithBefore:nil completion:nil];
 }
 
@@ -53,7 +52,6 @@
     [super viewWillDisappear:animated];
     [self.scanView removeTimer];
     [self removeFlashlightBtn];
-    self.navigationController.navigationBarHidden = YES;
     [obtain stopRunning];
 }
 
