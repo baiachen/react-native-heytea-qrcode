@@ -8,6 +8,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" /> <!-- 自动聚焦权限 -->
 
     <application  android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
         android:supportsRtl="true">
         <activity android:name=".activity.CaptureActivity" android:theme="@style/QRcodeTheme" android:exported="true"/>
     </application>
