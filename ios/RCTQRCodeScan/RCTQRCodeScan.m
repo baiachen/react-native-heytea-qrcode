@@ -48,10 +48,21 @@ RCT_EXPORT_METHOD(scanQRCode) {
 //获得当前导航控制器
 + (UINavigationController *)getRootNavVc {
     UIWindow * window = [[UIApplication sharedApplication] keyWindow];
-    
-    return (UINavigationController *)window.rootViewController;
+    return [self getNavVc:window.rootViewController];
 }
 
++ (UINavigationController *)getNavVc:(UIViewController *)vc {
+    UIViewController *presentedController = vc.presentedViewController;
+    if (presentedController && ![presentedController isBeingDismissed]) {
+        return [self getNavVc:presentedController];
+    } else if ([vc isKindOfClass:[UITabBarController class]]) {
+        UITabBarController *tabs = (UITabBarController *)vc;
+        return [self getNavVc:tabs.selectedViewController];
+    } else if ([vc isKindOfClass:[UINavigationController class]]) {
+        return (UINavigationController *)vc;
+    }
+    return nil;
+}
 
 - (void)dealloc {
 

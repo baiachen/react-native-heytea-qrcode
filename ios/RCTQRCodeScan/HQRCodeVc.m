@@ -67,7 +67,7 @@
     [obtain setBlockWithQRCodeObtainScanResult:^(SGQRCodeObtain *obtain, NSString *result) {
         if (result) {
             [obtain stopRunning];
-            [obtain playSoundName:@"ding.wav"];
+            // [obtain playSoundName:@"ding.wav"];
             [[NSNotificationCenter defaultCenter] postNotificationName:@"QRCodeInfoNotification" object:nil userInfo:@{@"result":result,@"scanType":@"QR_CODE"}];
             [weakSelf.navigationController popViewControllerAnimated:YES];
         }
@@ -94,8 +94,8 @@
     [self.navigationController.navigationBar setShadowImage:[UIImage new]];
     [self.navigationController.navigationBar setBackgroundImage:[UIImage new] forBarMetrics:UIBarMetricsDefault];
     self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"相册" style:UIBarButtonItemStylePlain target:self action:@selector(rightBarButtonItemAction)];
-    [self.navigationItem.rightBarButtonItem setTintColor:[UIColor whiteColor]];
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[[UIImage imageNamed:@"whiteBackArrow"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] style:UIBarButtonItemStylePlain target:self action:@selector(leftBarButtonItemAction)];
+    [self.navigationItem.rightBarButtonItem setTintColor:[UIColor blackColor]];
+    // self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithImage:[[UIImage imageNamed:@"whiteBackArrow"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] style:UIBarButtonItemStylePlain target:self action:@selector(leftBarButtonItemAction)];
 }
 
 - (void)leftBarButtonItemAction {

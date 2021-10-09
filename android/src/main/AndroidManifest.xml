@@ -9,7 +9,7 @@
 
     <application  android:label="@string/app_name"
         android:supportsRtl="true">
-        <activity android:name=".activity.CaptureActivity" android:exported="true"/>
+        <activity android:name=".activity.CaptureActivity" android:theme="@style/QRcodeTheme" android:exported="true"/>
     </application>
 
 </manifest>
